@@ -1,0 +1,3 @@
+my_auth.json
+__pycache__/
+*.secret.yaml
