@@ -17,6 +17,8 @@ RUN mkdir -p /root/.codex && \
 RUN pip install --no-cache-dir fastapi uvicorn pydantic requests
 
 # 5. 注入代码 (修正这里的文件名匹配)
+COPY core /app/core
+COPY adapters /app/adapters
 COPY main.py /app/main.py
 
 WORKDIR /app
