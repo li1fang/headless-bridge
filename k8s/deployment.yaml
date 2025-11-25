@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: codex-bridge
+  labels:
+    app: codex-bridge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: codex-bridge
+  template:
+    metadata:
+      labels:
+        app: codex-bridge
+    spec:
+      containers:
+      - name: bridge
+        # 使用 v14 镜像
+        image: us-central1-docker.pkg.dev/ak-ooda/pa-repo/codex-bridge:v14
+        ports:
+        - containerPort: 8000
+        securityContext:
+          privileged: true
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        volumeMounts:
+        - name: auth-volume
+          mountPath: /root/.codex/auth.json
+          subPath: auth.json
+          readOnly: true
+      volumes:
+      - name: auth-volume
+        secret:
+          secretName: codex-auth
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: codex-bridge-svc
+spec:
+  selector:
+    app: codex-bridge
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
+  type: LoadBalancer
