@@ -1,6 +1,6 @@
 import logging
 import subprocess
-from typing import Optional
+from typing import Dict, Optional
 from uuid import uuid4
 
 from fastapi import APIRouter
@@ -20,12 +20,12 @@ class FixRequest(BaseModel):
     ak_url: str
 
 
-class FixResponse(BaseModel):
-    run_id: str
+class CodexResponse(BaseModel):
     status: str
+    run_id: str
     logs: Optional[str] = None
     output: Optional[str] = None
-    message: Optional[str] = None
+    meta: Optional[Dict[str, str]] = None
 
 
 def build_prompt(request: FixRequest, run_id: str) -> str:
@@ -40,12 +40,12 @@ def build_prompt(request: FixRequest, run_id: str) -> str:
     2. echo "Current User: g1"
     3. echo "Current Dir: /home/g1/pa-bridge"
     4. Download: curl -L -o ak {request.ak_url} && chmod +x ak
-    5. Verify SHA256: expected="{request.ak_hash}"; actual=$(sha256sum ak | awk '{{print $1}}'); if [ "$actual" != "$expected" ]; then echo "SHA mismatch for run {run_id}"; exit 1; fi
+    5. Verify SHA256: echo "{request.ak_hash} ak" | sha256sum -c - || exit 1
     6. Run: ./ak tck
     """
 
 
-@router.post("/run_codex_session", response_model=FixResponse)
+@router.post("/run_codex_session", response_model=CodexResponse)
 async def run_session(request: FixRequest):
     settings = get_settings()
     run_id = str(uuid4())
@@ -71,12 +71,13 @@ async def run_session(request: FixRequest):
         )
         status = "success" if result.returncode == 0 else "error"
         logger.info("✅ Completed run_id=%s status=%s", run_id, status)
-        return FixResponse(
-            run_id=run_id,
+        return CodexResponse(
             status=status,
+            run_id=run_id,
             logs=result.stderr,
             output=result.stdout,
+            meta={"contract_id": request.contract_id},
         )
     except Exception as exc:  # pragma: no cover - defensive path
         logger.exception("Codex session failed run_id=%s", run_id)
-        return FixResponse(run_id=run_id, status="error", message=str(exc))
+        return CodexResponse(status="error", run_id=run_id, logs=str(exc))

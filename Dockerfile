@@ -14,7 +14,7 @@ RUN mkdir -p /root/.codex && \
     printf 'preferred_auth_method = "apikey"\n' > /root/.codex/config.toml
 
 # 4. Python 依赖
-RUN pip install --no-cache-dir fastapi uvicorn pydantic requests
+RUN pip install --no-cache-dir fastapi uvicorn pydantic pydantic-settings requests
 
 # 5. 注入代码 (修正这里的文件名匹配)
 COPY core /app/core
