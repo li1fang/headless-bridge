@@ -1,0 +1,126 @@
+{
+  "kind": "real HTTP + deterministic fixture processes; no model calls",
+  "recorded_at": "2026-11-11T08:02:44.873295+00:00",
+  "host_os": "Windows",
+  "python": "3.15.2",
+  "results": {
+    "success": {
+      "http_status": 200,
+      "body": {
+        "status": "success",
+        "reason": "completed",
+        "run_id": "a5004ff7-c0e4-4da4-b849-bbdcbab89eed",
+        "logs": "",
+        "output": "{\"fixture\": true, \"scenario\": \"success\", \"result\": \"completed\"}\r\n",
+        "exit_code": 0,
+        "duration_ms": 307,
+        "output_truncated": false,
+        "meta": {
+          "contract_id": "demo-success",
+          "backend": "fixture",
+          "fixture": true
+        }
+      }
+    },
+    "failure": {
+      "http_status": 200,
+      "body": {
+        "status": "error",
+        "reason": "nonzero_exit",
+        "run_id": "29062211-4184-411b-9422-cbd364c09011",
+        "logs": "fixture: deliberate nonzero exit\r\n",
+        "output": "",
+        "exit_code": 7,
+        "duration_ms": 281,
+        "output_truncated": false,
+        "meta": {
+          "contract_id": "demo-failure",
+          "backend": "fixture",
+          "fixture": true
+        }
+      }
+    },
+    "timeout": {
+      "http_status": 504,
+      "body": {
+        "status": "error",
+        "reason": "timeout",
+        "run_id": "52b35ac4-1f6d-4d6a-9e44-3665778d5c17",
+        "logs": "",
+        "output": "{\"fixture\": true, \"event\": \"waiting\"}\r\n",
+        "exit_code": null,
+        "duration_ms": 1513,
+        "output_truncated": false,
+        "meta": {
+          "contract_id": "demo-timeout",
+          "backend": "fixture",
+          "fixture": true
+        }
+      }
+    },
+    "large_output": {
+      "http_status": 200,
+      "body": {
+        "status": "success",
+        "reason": "completed",
+        "run_id": "ef67f497-5ee9-48a1-bc27-5cd467ed1f9e",
+        "logs": "YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",
+        "output": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        "exit_code": 0,
+        "duration_ms": 291,
+        "output_truncated": true,
+        "meta": {
+          "contract_id": "demo-large_output",
+          "backend": "fixture",
+          "fixture": true
+        }
+      }
+    },
+    "health_during_run": {
+      "http_status": 200,
+      "body": {
+        "status": "ok",
+        "backend": "fixture",
+        "active_runs": 1,
+        "capacity": 1
+      },
+      "elapsed_ms": 11
+    },
+    "busy": {
+      "http_status": 429,
+      "body": {
+        "status": "error",
+        "reason": "busy",
+        "run_id": "09eae654-d88b-4d31-84fc-5223b30cb4ba",
+        "logs": "",
+        "output": "",
+        "exit_code": null,
+        "duration_ms": 0,
+        "output_truncated": false,
+        "meta": {
+          "contract_id": "demo-success",
+          "backend": "fixture",
+          "fixture": true
+        }
+      }
+    },
+    "slow": {
+      "http_status": 200,
+      "body": {
+        "status": "success",
+        "reason": "completed",
+        "run_id": "ee804ff7-3a51-485f-a75a-16da67c96da0",
+        "logs": "",
+        "output": "{\"fixture\": true, \"scenario\": \"slow\", \"result\": \"completed\"}\r\n",
+        "exit_code": 0,
+        "duration_ms": 1282,
+        "output_truncated": false,
+        "meta": {
+          "contract_id": "demo-slow",
+          "backend": "fixture",
+          "fixture": true
+        }
+      }
+    }
+  }
+}

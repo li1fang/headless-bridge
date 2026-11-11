@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="780" viewBox="0 0 600 780" role="img" aria-labelledby="title desc">
+<title id="title">headless-bridge: a bounded execution path</title>
+<desc id="desc">Validate a request, check capacity, supervise a fixture or Codex process, and return an identified result with bounded output.</desc>
+<rect width="600" height="780" rx="24" fill="#172a41"/>
+<g font-family="Segoe UI, Arial, sans-serif">
+<text x="32" y="48" fill="#f3cd87" font-size="22" letter-spacing="2">HEADLESS-BRIDGE / EXECUTION</text>
+<text x="32" y="100" fill="#ffffff" font-size="36" font-weight="700">Small service.</text>
+<text x="32" y="143" fill="#ffffff" font-size="36" font-weight="700">Explicit outcomes.</text>
+<path d="M65 220 V650" stroke="#8eabc5" stroke-width="3"/>
+<g fill="#223b56" stroke="#4e6c89"><rect x="32" y="182" width="536" height="114" rx="14"/><rect x="32" y="314" width="536" height="114" rx="14"/><rect x="32" y="446" width="536" height="114" rx="14"/><rect x="32" y="578" width="536" height="114" rx="14"/></g>
+<g fill="#f3cd87" font-size="26" font-weight="700"><text x="50" y="220">01</text><text x="50" y="352">02</text><text x="50" y="484">03</text><text x="50" y="616">04</text></g>
+<g fill="#ffffff" font-size="30" font-weight="600"><text x="101" y="220">Identify the request</text><text x="101" y="352">Check capacity</text><text x="101" y="484">Supervise execution</text><text x="101" y="616">Return the outcome</text></g>
+<g fill="#ccdbea" font-size="26"><text x="101" y="263">Contract + unique run ID</text><text x="101" y="395">Start now or return busy</text><text x="101" y="527">Fixture or read-only Codex</text><text x="101" y="659">Exit · timeout · bounded logs</text></g>
+<text x="32" y="741" fill="#b3c5d9" font-size="21">Real HTTP demo · no credentials required</text>
+</g></svg>

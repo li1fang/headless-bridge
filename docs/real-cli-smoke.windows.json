@@ -1,0 +1,19 @@
+{
+  "kind": "sanitized real CLI compatibility receipt",
+  "recorded_on": "2026-11-11",
+  "host": "Windows",
+  "cli_version": "codex-cli 0.167.0-alpha.3.2",
+  "mode": "read-only; ephemeral; user config ignored; existing CLI-managed authentication",
+  "prompt": "Reply with exactly BRIDGE_SMOKE_OK. Do not use any tools.",
+  "exit_code": 0,
+  "duration_ms": 5831,
+  "event_types": [
+    "thread.started",
+    "turn.started",
+    "item.completed",
+    "turn.completed"
+  ],
+  "assistant_reply": "BRIDGE_SMOKE_OK",
+  "tool_event_count": 0,
+  "scope": "runner invocation only; no project repair, file changes or credentials published"
+}
