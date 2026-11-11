@@ -1,36 +1,40 @@
-import logging
+from contextlib import asynccontextmanager
 from pathlib import Path
-from fastapi import FastAPI, HTTPException
+import shutil
+
+from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
-from adapters.codex.handler import router as codex_router
-from core.config import get_settings
+from adapters.codex.handler import router
+from core.config import Settings
+from core.runner import Runner
 
-logger = logging.getLogger("headless-bridge")
 
+def create_app(settings: Settings | None = None) -> FastAPI:
+    settings = settings or Settings()
+    runner = Runner(settings)
 
-def create_app() -> FastAPI:
-    settings = get_settings()
-    app = FastAPI(title=settings.service_name)
+    @asynccontextmanager
+    async def lifespan(app):
+        yield
+        await runner.drain()
 
-    app.include_router(codex_router)
+    app = FastAPI(title=settings.service_name, version="0.2.0", lifespan=lifespan)
+    app.state.runner = runner
+    app.include_router(router)
 
     @app.get("/health")
     async def health(deep: bool = False):
-        """Basic health endpoint with optional auth volume verification."""
-        payload = {"status": "ok"}
-
-        if deep:
-            auth_path = Path(settings.auth_file)
-            payload["auth_file"] = str(auth_path)
-            payload["auth_present"] = auth_path.is_file()
-
-            if not payload["auth_present"]:
-                raise HTTPException(
-                    status_code=503,
-                    detail={"reason": "auth file missing", **payload},
-                )
-
-        return JSONResponse(payload)
+        payload = {"status": "ok", "backend": settings.backend,
+                   "active_runs": runner.active, "capacity": settings.max_concurrency}
+        code = 200
+        if deep and settings.backend == "codex":
+            executable = shutil.which(settings.codex_binary)
+            payload.update(executor_available=bool(executable),
+                           auth_present=Path(settings.auth_file).is_file(),
+                           check_scope="local executable and auth-file presence only")
+            if not executable or not payload["auth_present"]:
+                payload["status"], code = "unavailable", 503
+        return JSONResponse(payload, status_code=code)
 
     return app

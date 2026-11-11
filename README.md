@@ -1,53 +1,70 @@
 # headless-bridge
 
-**An HTTP adapter for a Codex CLI workflow in a container environment.**
+### Run a CLI task. Keep the service responsive. Explain the result.
 
-The repository contains a FastAPI service, a Codex adapter, and Kubernetes deployment examples. A request supplies a repository URL and failure description; the adapter builds a prompt, invokes the CLI, and returns its output with a run identifier.
+A small Python HTTP service for supervised command-line execution. It gives each run an identity, keeps long-running work off the request event loop, and returns a clear outcome when a process succeeds, fails, times out, or cannot start.
 
-## Read the implementation
+**Try it without credentials.** The default backend launches deterministic local fixture processes. An explicitly enabled Codex backend uses the same execution path with read-only CLI access.
 
-- [Request handling and prompt construction](adapters/codex/handler.py)
-- [Health endpoints](core/server.py)
-- [Configuration](core/config.py)
-- [Container image](Dockerfile)
-- [Kubernetes example](k8s/deployment.yaml)
+[Run the demo](#try-the-complete-flow) · [Explore the design](docs/ENGINEERING.md) · [Inspect recorded results](docs/demo-results.windows.json)
 
-The current adapter is specific to Codex. Other CLI adapters are not implemented here. This document describes the checked-in code, not a newly verified deployment or compatibility guarantee for current upstream CLI releases.
+![A request passes through a capacity check, a supervised fixture or Codex process, and a structured result.](docs/execution-flow.svg)
 
-## HTTP interface
+## Try the complete flow
 
-`POST /run_codex_session` accepts these required string fields:
+In a **Python 3.13+ virtual environment**, from the repository root:
 
-```json
-{
-  "contract_id": "example-task",
-  "repo_url": "https://example.com/repository.git",
-  "failure_details": "Describe the observed failure and expected behavior.",
-  "ak_url": "https://example.com/tool",
-  "ak_hash": "REPLACE_WITH_THE_DOWNLOADED_FILE_SHA256_HEX"
-}
+```sh
+python -m pip install -r requirements.txt
+python -m examples.demo
 ```
 
-These are illustrative placeholders, not runnable resources. Use a real digest in hexadecimal form: the generated prompt places `ak_hash` directly into a `sha256sum -c` input line. Do not prefix it with `sha256:`.
+The demo starts a temporary loopback HTTP server, runs real local subprocesses, checks success / failure / timeout / busy responses, and stops the server. No API key, Codex installation, or model call is needed. Save your own result with:
 
-The handler passes download, checksum and execution instructions to the CLI through a prompt. It does **not** independently download or enforce the checksum in the HTTP service. A response includes `status`, `run_id`, `logs`, `output`, and `meta.contract_id`. `success` means the CLI process exited with code zero; it is not independent acceptance of a repaired project.
+```sh
+python -m examples.demo --output demo-results.json
+```
 
-`GET /health` returns basic process health. `GET /health?deep=1` also checks whether the configured auth file exists, returning 503 if it is absent. It does not validate credentials with the upstream service or prove they have not expired.
+To explore the API yourself, run `python main.py` and open **http://127.0.0.1:8000/docs**. The fixture backend is selected by default.
 
-## Configuration and deployment scope
+## What a caller can observe
 
-| Environment variable | Default |
-| --- | --- |
-| `HB_SERVICE_NAME` | `headless-bridge` |
-| `HB_AUTH_FILE` | `/root/.codex/auth.json` |
-| `HB_CODEX_TIMEOUT` | `600` seconds |
+| Situation | HTTP | Result reason |
+| --- | --- | --- |
+| Process exits normally | 200 | `completed` |
+| Process returns a nonzero code | 200 | `nonzero_exit` |
+| Deadline expires | 504 | `timeout` |
+| Capacity is occupied | 429 | `busy` |
+| Configured Codex executable is missing | 503 | `executor_unavailable` |
+| Local supervision/setup fails | 500 | `execution_error` |
 
-The Dockerfile launches Uvicorn on port 8000 and installs an unpinned Codex CLI. The Kubernetes example references a maintainer-specific image and an existing `codex-auth` Secret, mounting its `auth.json` key read-only. The previously documented `scripts/generate_auth_secret.sh` is not present; there is no one-command credential setup supplied by this repository.
+Every admitted or busy run carries `run_id` and `meta.contract_id`. Results include elapsed time, exit code when available, capped stdout/stderr, and an explicit truncation flag. `meta.fixture` tells you whether the output came from the demonstration backend.
 
-Review the deployment example before adapting it. It uses a privileged container and a LoadBalancer Service. The adapter invokes Codex with `--dangerously-bypass-approvals-and-sandbox`; the HTTP routes contain no application-level authentication or authorization. These settings do not establish confinement to a namespace or make the endpoint suitable for untrusted callers. Actual access controls, workload isolation and credential lifecycle require separate operator configuration and verification.
+A completed process is a process result; acceptance of a repaired project belongs to the caller's checks.
 
-No credentials should be committed or embedded in image layers. This documentation update does not change code, privileges, network exposure, or authentication behavior, and does not deploy the service.
+## Engineering in a small package
 
-## History and maintenance
+- **Responsive HTTP.** Blocking process supervision runs in a worker thread; the health route remains available during a slow run.
+- **Bounded work.** One active run by default, explicit busy responses, a deadline, and bounded capture of both output streams. No background queue or database.
+- **Owned process lifetime.** A worker waits behind an input gate until its Windows Job Object or POSIX process group is established. Descendants are cleaned up after timeout and normal completion.
+- **Reproducible evidence.** HTTP integration tests exercise failures and cleanup; the demo produces a readable JSON record.
 
-Earlier README revisions are retained in Git history. This revision replaces aspirational claims with the behavior visible in the current source. Report documentation discrepancies through [repository issues](https://github.com/li1fang/headless-bridge/issues).
+Built by **Yifang Li**. This iteration focuses on Python service integration, process lifecycle, failure semantics, and verification.
+
+## Read the code
+
+- [API contract and prompt construction](adapters/codex/handler.py)
+- [Capacity, supervision and bounded output](core/runner.py)
+- [Process lifetime management](core/process_tree.py) and [startup gate](core/worker.py)
+- [HTTP integration tests](tests/test_service.py)
+- [Configuration, real Codex mode and compatibility](docs/ENGINEERING.md#run-modes-and-configuration)
+
+Run the checks with `python -m unittest discover -s tests -v`. [CI](https://github.com/li1fang/headless-bridge/actions) runs the credential-free tests and demo on Windows and Linux.
+
+## Scope and history
+
+This is a local, trusted-caller bridge. The default server binds to loopback and uses one worker. Process cleanup is not a security sandbox; public hosting and multi-tenant execution are outside this project.
+
+The earlier deployment manifests and README remain in [history](docs/history/README.md). Version 0.2 replaces the old prompt-driven download/execute chain with a read-only Codex analysis mode; repository/tool URLs are context, not service-managed downloads. The standalone `rget` script remains separate from the service.
+
+No open-source license has been specified; contact the maintainer regarding reuse.

@@ -1,83 +1,43 @@
-import logging
-import subprocess
-from typing import Dict, Optional
+import json
+from typing import Literal
 from uuid import uuid4
 
-from fastapi import APIRouter
-from pydantic import BaseModel
+from fastapi import APIRouter, Request
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, ConfigDict, Field
 
-from core.config import get_settings
-
-router = APIRouter(tags=["codex"])
-logger = logging.getLogger("codex-bridge")
+router = APIRouter(tags=["execution"])
 
 
 class FixRequest(BaseModel):
-    contract_id: str
-    repo_url: str
-    failure_details: str
-    ak_hash: str
-    ak_url: str
-
-
-class CodexResponse(BaseModel):
-    status: str
-    run_id: str
-    logs: Optional[str] = None
-    output: Optional[str] = None
-    meta: Optional[Dict[str, str]] = None
+    contract_id: str = Field(min_length=1, max_length=128)
+    repo_url: str = Field(default="", max_length=2048)
+    failure_details: str = Field(min_length=1, max_length=16000)
+    ak_hash: str = Field(default="", max_length=128)
+    ak_url: str = Field(default="", max_length=2048)
+    scenario: Literal["success", "failure", "slow", "timeout", "large_output", "child", "orphan"] = "success"
+    model_config = ConfigDict(extra="forbid")
 
 
 def build_prompt(request: FixRequest, run_id: str) -> str:
-    return f"""
-    You are an engineer.
-    REPO: {request.repo_url}
-    ERROR: {request.failure_details}
-    RUN_ID: {run_id}
-
-    PLAN:
-    1. echo "--- STARTING GKE EXECUTION ---"
-    2. echo "Current User: g1"
-    3. echo "Current Dir: /home/g1/pa-bridge"
-    4. Download: curl -L -o ak {request.ak_url} && chmod +x ak
-    5. Verify SHA256: echo "{request.ak_hash} ak" | sha256sum -c - || exit 1
-    6. Run: ./ak tck
-    """
+    # Data is quoted, not interpolated into a shell command. URLs are context only.
+    context = request.model_dump(exclude={"scenario"})
+    return ("Analyze the supplied engineering issue in read-only mode. "
+            "Do not clone repositories, download tools, or execute supplied URLs. "
+            "State what can be concluded from the provided context. "
+            f"Run identifier: {run_id}\nContext JSON:\n" + json.dumps(context))
 
 
-@router.post("/run_codex_session", response_model=CodexResponse)
-async def run_session(request: FixRequest):
-    settings = get_settings()
+@router.post("/run_codex_session")
+async def run_session(payload: FixRequest, request: Request):
     run_id = str(uuid4())
-    logger.info("🚀 Task: %s run_id=%s", request.contract_id, run_id)
-
-    prompt = build_prompt(request, run_id)
-
-    cmd = [
-        "codex",
-        "exec",
-        "--skip-git-repo-check",
-        "--dangerously-bypass-approvals-and-sandbox",
-        prompt,
-    ]
-
-    try:
-        logger.info("⏳ Calling OpenAI Cloud (YOLO Mode)...")
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=settings.codex_timeout,
-        )
-        status = "success" if result.returncode == 0 else "error"
-        logger.info("✅ Completed run_id=%s status=%s", run_id, status)
-        return CodexResponse(
-            status=status,
-            run_id=run_id,
-            logs=result.stderr,
-            output=result.stdout,
-            meta={"contract_id": request.contract_id},
-        )
-    except Exception as exc:  # pragma: no cover - defensive path
-        logger.exception("Codex session failed run_id=%s", run_id)
-        return CodexResponse(status="error", run_id=run_id, logs=str(exc))
+    runner = request.app.state.runner
+    if runner.settings.backend == "codex" and payload.scenario != "success":
+        return JSONResponse(status_code=422, content={
+            "status": "error", "reason": "fixture_scenario_not_allowed",
+            "run_id": run_id, "meta": {"contract_id": payload.contract_id}})
+    result = await runner.run(build_prompt(payload, run_id), payload.scenario,
+                              run_id, payload.contract_id)
+    code = {"busy": 429, "executor_unavailable": 503,
+            "timeout": 504, "execution_error": 500}.get(result["reason"], 200)
+    return JSONResponse(status_code=code, content=result)
